@@ -1,7 +1,10 @@
 # DEXTra.jl
 
-Documentation for DEXTra.jl
+Documentation for DEXTra.jl.
 
-## Function Documentation
+!!! warn "WORK IN PROGRESS!!"
+    This package is completely experimental and not ready for public use.
 
-## Function Documentation
+# Developers
+
+DEXTra is currently developed by Jimmy-Xuan Shen (@jmmshn).

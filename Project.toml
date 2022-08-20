@@ -6,7 +6,9 @@ version = "0.1.0"
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
+JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
 Octavian = "6fd5a793-0b7e-452c-907f-f8bfe9c57db4"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 TropicalGEMM = "a4ad3063-64a7-4bad-8738-34ed09bc0236"
 TropicalNumbers = "b3a74e9c-7526-4576-a4eb-79c0d4c32334"
 

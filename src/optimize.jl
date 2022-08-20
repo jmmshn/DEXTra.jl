@@ -13,7 +13,7 @@ Subject to:
     x_i ≥ 0
 where F_i( x_i ) is the output of exchange function i.
 """
-function get_model(total::Number, funcs::Vector; limits::Vector=[])
+function get_model(total::Number, funcs::Vector; limits::Vector = [])
     model = Model(Ipopt.Optimizer)
     set_silent(model)
     n = length(funcs)
@@ -41,6 +41,6 @@ end
 
 Call get_model(total, [func, ...]) with N copies of func.
 """
-function get_model(total::Number, func::Function, N::Int= 1; limits::Vector=[])
-    get_model(total, repeat([func], N), limits=limits)
+function get_model(total::Number, func::Function, N::Int = 1; limits::Vector = [])
+    get_model(total, repeat([func], N), limits = limits)
 end
