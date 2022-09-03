@@ -1,5 +1,7 @@
 # DEXTra.jl
 
+[![CI](https://github.com/jmmshn/DEXTra.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/jmmshn/DEXTra.jl/actions/workflows/ci.yml)
+
 _DEXTra.jl_ is a Julia package for routing and optimizing asset transfers on realistic networks of decentralized exchanges (DEXs).
 
 !!! warning
