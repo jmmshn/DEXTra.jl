@@ -1,8 +1,8 @@
 name: CI
 on:
   push:
-    branches: [master]
-    tags: [v*]
+    branches: [main]
+    tags: [*]
   pull_request:
 
 jobs:
