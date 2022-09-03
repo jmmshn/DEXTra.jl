@@ -1,6 +1,13 @@
 using Documenter
 using DEXTra
 
+# Copy Over the README.md
+cp(
+    normpath(@__FILE__, "../../README.md"),
+    normpath(@__FILE__, "../src/index.md");
+    force=true,
+)
+
 format = Documenter.HTML(
     collapselevel = 2,
     prettyurls = get(ENV, "CI", nothing) == "true",

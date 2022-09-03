@@ -1,7 +1,16 @@
 name = "DEXTra"
 uuid = "88458aad-b251-4a2a-9734-84f27610c482"
-authors = ["jmmshn <jmmshn@gmail.com> and contributors"]
+authors = ["jmmshn <jmmshn@gmail.com>"]
 version = "0.1.0"
 
+[deps]
+Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
+
 [compat]
-julia = "1"
+julia = "1.0.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
