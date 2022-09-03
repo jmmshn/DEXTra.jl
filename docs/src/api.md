@@ -3,5 +3,10 @@
 ```@autodocs
 Modules = [DEXTra]
 Order   = [:type, :function]
-pages = ["core.jl", "exchange_funcs.jl"]
+pages = ["core.jl",]
+```
+
+```@autodocs
+Modules = [DEXTra.ExchangeFunctions]
+Order   = [:function]
 ```

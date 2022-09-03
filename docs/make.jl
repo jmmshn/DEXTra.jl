@@ -1,5 +1,6 @@
 using Documenter
 using DEXTra
+using DEXTra.ExchangeFunctions
 
 # Copy Over the README.md
 cp(
