@@ -1,6 +1,9 @@
 # DEXTra.jl
 
-[![CI](https://github.com/jmmshn/DEXTra.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/jmmshn/DEXTra.jl/actions/workflows/ci.yml)
+[![][docs-latest-img]][docs-latest-url]
+[![][gha-img]][gha-url]
+
+Full documentation is available at [https://jmmshn.github.io/DEXTra.jl/dev/](https://jmmshn.github.io/DEXTra.jl/dev/).
 
 _DEXTra.jl_ is a Julia package for routing and optimizing asset transfers on realistic networks of decentralized exchanges (DEXs).
 
@@ -19,3 +22,10 @@ Our code combines two methods for optimizing asset transfers on DEXs:
 # Developers
 
 DEXTra.jl is developed by Dr. Jimmy-Xuan Shen (@jmmshn).
+
+
+[docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
+[docs-latest-url]: https://jmmshn.github.io/DEXTra.jl/dev/
+
+[gha-img]: https://github.com/jmmshn/DEXTra.jl/actions/workflows/ci.yml/badge.svg
+[gha-url]: https://github.com/jmmshn/DEXTra.jl/actions?query=workflow%3ACI
