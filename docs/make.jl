@@ -16,6 +16,7 @@ format = Documenter.HTML(
 
 pages_files = ["Home" => "index.md", "API Documentation" => "api.md"]
 
+# make docs
 makedocs(
     sitename = "DEXTra",
     format = format,
@@ -24,7 +25,7 @@ makedocs(
     clean = true,
 )
 
-### Deploy docs
+# deploy docs
 deploydocs(
     repo = "github.com/jmmshn/DEXTra.jl.git",
     target = "build",
