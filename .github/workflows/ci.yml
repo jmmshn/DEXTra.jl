@@ -1,11 +1,9 @@
 name: CI
-
 on:
   push:
-    branches: "master"
-    tags: ["*"]
+    branches: [master]
+    tags: [v*]
   pull_request:
-  release:
 
 jobs:
   test:
@@ -15,13 +13,10 @@ jobs:
       fail-fast: false
       matrix:
         julia-version:
-          - "1.0"
-          - "1"
+          - "1.6"
           - "nightly"
         os:
           - ubuntu-latest
-          - macos-latest
-          - windows-latest
         julia-arch:
           - x64
 
@@ -38,15 +33,3 @@ jobs:
         continue-on-error: true
       - uses: julia-actions/julia-uploadcoveralls@v0.1
         continue-on-error: true
-
-  Documentation:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: julia-actions/setup-julia@latest
-        with:
-          version: 1
-      - uses: julia-actions/cache@v1
-      - uses: julia-actions/julia-docdeploy@releases/v1
-        env:
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
