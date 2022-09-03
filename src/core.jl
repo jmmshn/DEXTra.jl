@@ -12,15 +12,24 @@ as the nodes in a graph. All trading must occur between liquidity pools.
 
 * `chain`: The name of the blockchain this liquidity pool is on.
 * `coin`: The name of the coin
+* `liquidity`: The amount of liquidity in the pool denominated it's own coin.
 * `name`: Allows addtional identification options if there are multiple
   liquidity pools for the same coin on the same chain.
-* `liquidity`: The amount of liquidity in the pool denominated it's own coin.
 """
 mutable struct LiquidityPool
     chain::String
     coin::String
-    name::String
     liquidity::Float64
+    name::String
+    function LiquidityPool(
+        chain::String,
+        coin::String,
+        liquidity::Float64;
+        name::String = "",
+    )
+        name = name == "" ? "$(chain):$(coin)" : name
+        return new(chain, coin, liquidity, name)
+    end
 end
 
 """
@@ -30,6 +39,15 @@ A trading pair represents a pair of liquidity pools and the exchange function be
 
 !!! note
     The two pools should always be ordered alphabetically.
+
+**Fields**
+
+* `provider`: The name of the service provider ex. Uniswap, Sushiswap, etc.
+* `pool1`: The first liquidity pool in the trading pair.
+* `pool2`: The second liquidity pool in the trading pair.
+* `fee`: The fee charged for exchanges on this trading pair.
+* `exchange_func`: The exchange function between the two pools.
+
 """
 mutable struct TradingPair
     name::String
@@ -45,7 +63,7 @@ mutable struct TradingPair
         fee::Float64,
         exchange_func::Function,
     )
-        name = "$(provider)|$(lp1.chain):$(lp1.coin)|$(lp2.chain):$(lp2.coin)"
+        name = "$(provider)|$(lp1.name)|$(lp2.name)"
         new(name, provider, lp1, lp2, fee, exchange_func)
     end
 end
