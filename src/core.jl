@@ -4,12 +4,22 @@ Definitions of core concepts in DEXTra.
 
 """
     LiquidityPool
-A liquidity pool represents a single source of assets.
-All trading occurs between liquidity pools.
+
+A liquidity pool represents a single source of assets and can be thought of
+as the nodes in a graph. All trading must occur between liquidity pools.
+
+**Fields**
+
+* `chain`: The name of the blockchain this liquidity pool is on.
+* `coin`: The name of the coin
+* `name`: Allows addtional identification options if there are multiple
+  liquidity pools for the same coin on the same chain.
+* `liquidity`: The amount of liquidity in the pool denominated it's own coin.
 """
 mutable struct LiquidityPool
     chain::String
     coin::String
+    name::String
     liquidity::Float64
 end
 
@@ -18,7 +28,8 @@ end
 
 A trading pair represents a pair of liquidity pools and the exchange function between these pools.
 
-Note: The two pools should always be ordered alphabetically.
+!!! note
+    The two pools should always be ordered alphabetically.
 """
 mutable struct TradingPair
     name::String
