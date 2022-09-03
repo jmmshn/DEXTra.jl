@@ -31,7 +31,7 @@ deploydocs(
     repo = "github.com/jmmshn/DEXTra.jl.git",
     target = "build",
     devurl = "dev",
-    versions = ["stable" => "v^", "v#.#", devurl => devurl],
+    versions = ["stable" => "v^", "v#.#", ],
     deps = nothing,
     make = nothing,
     push_preview = true,
