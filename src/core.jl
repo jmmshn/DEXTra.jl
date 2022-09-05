@@ -15,6 +15,7 @@ as the nodes in a graph. All trading must occur between liquidity pools.
 * `liquidity`: The amount of liquidity in the pool denominated it's own coin.
 * `name`: Allows addtional identification options if there are multiple
   liquidity pools for the same coin on the same chain.
+
 """
 mutable struct LiquidityPool
     chain::String
