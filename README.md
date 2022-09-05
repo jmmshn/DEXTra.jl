@@ -30,7 +30,19 @@ We will use both of these definitions in our code depending on what we are tryin
 
 - **Coincidence of Wants**: A coincidence of wants is a situation where two users have assets that they want to trade with each other.  In this case, the two users can trade directly with each other without routing through a DEX.
 
+## Development Plans
+- [ ] Level graph -> weighted graph -> optimizer pipeline
+- [ ] Standardize output API
+- [ ] COW algorithm
+- [ ] Reading DEX data from Mongodb.
+- [ ] Notebook tutorials _a la_ JuliaGraphsTutorials.
+
+
 ## Developers
 
-DEXTra.jl is developed by Dr. Jimmy-Xuan Shen (@jmmshn).
+DEXTra.jl is developed and maintained by Jimmy-Xuan Shen (@jmmshn) 
+with contributions by:
+    - Jesper T. Kristensen
+    - Juan Pablo Madrigal Cianci
+    - Giorgos Felekis
 
