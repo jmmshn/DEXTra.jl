@@ -3,6 +3,7 @@
 
 # %%
 using Graphs
+using DataStructures
 import Graphs.rem_vertex!
 """
     DEXGraph
@@ -18,6 +19,11 @@ struct DEXGraph
     graph::Graph # undirected
     nodes::Vector{String}
     positions::Dict{String,Int}
+end
+
+function DEXGraph(ex_graph, names)
+    positions = Dict(n=>p for (p, n) in enumerate(names))
+    return DEXGraph(ex_graph, names, positions)
 end
 
 # """
@@ -63,27 +69,43 @@ end
 
 Obtain a level graph from a `DEXGraph` object
 """
-function get_level_graph(dex_graph::DEXGraph, source::String)
-    # get the level graph
+function get_level_graph(dex_graph::DEXGraph, source::String; trim_interlayer::Bool=true)
+    # keep track of the levels and do not allow inter-level connections
     level_graph = Graph(length(dex_graph.nodes))
-    qq = [dex_graph.positions[source]]
-    visited = Set([dex_graph.positions[source]])
+    qq = [(dex_graph.positions[source], 0)]
+    visited = Set([])
+    lvl_sets = DefaultDict{Int,Set{Int}}(() -> Set(Int[]))
     while !isempty(qq)
-        u = popfirst!(qq)
+        u, lvl = popfirst!(qq)
+        u ∈ visited && continue
+        push!(lvl_sets[lvl], u)
+        push!(visited, u) 
         for v in outneighbors(dex_graph.graph, u)
             if v ∉ visited
-                push!(qq, v)
-                push!(visited, v)
+                push!(qq, (v, lvl + 1))
                 add_edge!(level_graph, u, v)
             end
         end
     end
+    
+    if trim_interlayer
+        # remove the edges inside each level
+        for (_, nodes) in lvl_sets
+            for u in nodes
+                nn = collect(Set(outneighbors(level_graph, u)) ∩ nodes) # 
+                for v in nn # TODO: why does changing this to `level_graph.graph` break things? 
+                    rem_edge!(level_graph, u, v)
+                end
+            end
+        end
+    end
+
     # level_graph has the exact indicies of dex_graph.graph
     new_nodes = copy(dex_graph.nodes)
     new_pos = copy(dex_graph.positions)
     out_graph = DEXGraph(level_graph, new_nodes, new_pos)
     # remove the all nodes not in visited
-    for (i,name) in enumerate(dex_graph.nodes)
+    for (i, name) in enumerate(dex_graph.nodes)
         i ∉ visited && rem_vertex!(out_graph, name)
     end
     return out_graph
