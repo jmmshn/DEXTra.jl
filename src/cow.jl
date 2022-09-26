@@ -128,4 +128,3 @@ function total_trade_volume(orderbook::OrderBook, buy_volumes::Vector{T}, sell_v
     end
     return total_buy, total_sell
 end
-
