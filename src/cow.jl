@@ -121,8 +121,11 @@ Compute the total trade volume of an orderbook given the buy and sell volumes an
 """
 function total_trade_volume(orderbook::OrderBook, buy_volumes::Vector{T}, sell_volumes::Vector{T}, prices::Vector{T}) where T <: Real
     total_buy = 0.
+    total_sell = 0.
     for (i, order) in enumerate(orderbook.orders)
         total_buy += buy_volumes[i] * prices[order.β]
+        total_sell += sell_volumes[i] * prices[order.σ]
     end
-    return total_buy
+    return total_buy, total_sell
 end
+

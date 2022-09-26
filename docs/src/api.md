@@ -3,7 +3,7 @@
 ```@autodocs
 Modules = [DEXTra]
 Order   = [:type, :function]
-pages = ["core.jl",]
+pages = ["core.jl", "cow.jl"]
 ```
 
 ```@autodocs
