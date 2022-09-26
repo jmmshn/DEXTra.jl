@@ -93,6 +93,36 @@ function MarketSellOrder(β, σ, ȳ)
     Order(β, σ, +Inf, ȳ, +Inf)
 end
 
-struct Orderbook
+
+"""
+    OrderBook
+
+A stack of orders.
+
+**Fields**
+* `orders`: A vector of orders.
+* `assets`: A vector of asset names.
+"""
+struct OrderBook
     orders::Vector{Order}
+    assets::Vector{String}
+end
+
+"""
+    total_trade_volume(orderbook::Orderbook, buy_volumes::Vector{Float64}, sell_volumes::Vector{Float64}, prices::Vector{Float64})
+
+Compute the total trade volume of an orderbook given the buy and sell volumes and prices of each asset.
+
+**Arguments**
+* `orderbook`: The orderbook.
+* `buy_volumes`: A vector of buy volumes for each asset.
+* `sell_volumes`: A vector of sell volumes for each asset.
+* `prices`: A vector of representing all the prices.
+"""
+function total_trade_volume(orderbook::OrderBook, buy_volumes::Vector{T}, sell_volumes::Vector{T}, prices::Vector{T}) where T <: Real
+    total_buy = 0.
+    for (i, order) in enumerate(orderbook.orders)
+        total_buy += buy_volumes[i] * prices[order.β]
+    end
+    return total_buy
 end
