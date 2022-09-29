@@ -1,3 +1,4 @@
+using JuMP, Ipopt
 """Definition of orderbooks as as stacks for CoW
 
 Each order is described by:
@@ -118,13 +119,66 @@ Compute the total trade volume of an orderbook given the buy and sell volumes an
 * `buy_volumes`: A vector of buy volumes for each asset.
 * `sell_volumes`: A vector of sell volumes for each asset.
 * `prices`: A vector of representing all the prices.
+
+**Kwargs**
+* `pmap`: A dictionary that maps the index of the asset prices 
+    (i.e. if `3 => 1` is in the pmap then prices[1] will be used to represent the price of asset 3).
+    This allows you have a small vector representation of the prices.
 """
-function total_trade_volume(orderbook::OrderBook, buy_volumes::Vector{T}, sell_volumes::Vector{T}, prices::Vector{T}) where T <: Real
+function total_trade_volume(orderbook::OrderBook, buy_volumes::Vector{T}, sell_volumes::Vector{T}, prices::Vector{T}; pmap = Dict()) where T <: Real
     total_buy = 0.
     total_sell = 0.
     for (i, order) in enumerate(orderbook.orders)
-        total_buy += buy_volumes[i] * prices[order.β]
-        total_sell += sell_volumes[i] * prices[order.σ]
+        β = order.β in keys(pmap) ? pmap[order.β] : order.β 
+        σ = order.σ in keys(pmap) ? pmap[order.σ] : order.σ
+        total_buy += buy_volumes[i] * prices[β]
+        total_sell += sell_volumes[i] * prices[σ]
     end
-    return total_buy, total_sell
+    return total_buy + total_sell
+end
+
+"""
+    get_asset_map(orderbook::OrderBook)
+
+Get a dictionary that maps the index of the assets in the orderbook 
+to the index of the assets in the prices vector.
+(i.e. if `3 => 1` is in the pmap then prices[1] will be used to 
+represent the price of asset 3).
+This allows you have a small vector representation of the prices.
+
+**Arguments**
+* `orderbook`: The orderbook.
+"""
+function get_asset_map(orderbook)
+    # loop though and only keep the observed currecies, this limits the dimensions of p.
+	observed_assets = Set{Int}()
+    for order in orderbook.orders
+        push!(observed_assets, order.β)
+        push!(observed_assets, order.σ)
+    end
+    observed_assets = sort(collect(observed_assets))
+    Dict{Int, Int}( (asset, i) for (i, asset) in enumerate(observed_assets) )
+end
+
+"""
+    construct_model(orderbook::OrderBook, buy_volumes::Vector{Float64}, sell_volumes::Vector{Float64}, prices::Vector{Float64})
+
+Construct a JuMP model for the CoW problem.
+
+**Arguments**
+* `orderbook`: The orderbook.
+* `buy_volumes`: A vector of buy volumes for each asset.
+* `sell_volumes`: A vector of sell volumes for each asset.
+* `prices`: A vector of representing all the prices.
+"""
+function construct_model(opt_func, orderbook::OrderBook, buy_volumes::Vector{T}, sell_volumes::Vector{T}, prices::Vector{T}) where T <: Real
+    model = Model(with_optimizer(Ipopt.Optimizer))
+    asset_map = get_asset_map(orderbook)
+    x = @variable(model, [i=1:length(orderbook.orders)], lower_bound=0, upper_bound=buy_volumes[i])
+    y = @variable(model, [i=1:length(orderbook.orders)], lower_bound=0, upper_bound=sell_volumes[i])
+    p = @variable(model, [i=1:length(observed_assets)], lower_bound=0, upper_bound=Inf)
+    # objective
+    objective = opt_func(orderbook, x, y, p, asset_map)
+    set_objective(model, MOI.MAX_SENSE, objective)
+    return model
 end
