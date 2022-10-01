@@ -1,4 +1,10 @@
-using JuMP, Ipopt
+using JuMP, Ipopt, GraphRecipes
+import ColorSchemes.leonardo
+import DataStructures: DefaultDict
+using GraphPlot
+import ColorSchemes:diverging_linear_bjr_30_55_c53_n256
+
+
 """Definition of orderbooks as as stacks for CoW
 
 Each order is described by:
@@ -34,6 +40,7 @@ struct Order
     x̄::Float64
     ȳ::Float64
     π::Float64
+    buy::Bool
 end
 
 """
@@ -48,7 +55,7 @@ A tuple representing a limit buy order in the orderbook.
 * `π`: The maximum exchange rate (i.e. p_β/p_σ ≤ π).
 """
 function LimitBuyOrder(β, σ, x̄, π)
-    Order(β, σ, x̄, +Inf, π)
+    Order(β, σ, x̄, +Inf, π, true)
 end
 
 """
@@ -63,7 +70,7 @@ A tuple representing a limit sell order in the orderbook.
 * `π`: The maximum exchange rate (i.e. p_β/p_σ ≤ π).
 """
 function LimitSellOrder(β, σ, ȳ, π)
-    Order(β, σ, +Inf, ȳ, π)
+    Order(β, σ, +Inf, ȳ, π, false)
 end
 
 """
@@ -77,7 +84,7 @@ A tuple representing a market buy order in the orderbook.
 * `x̄`: The maximum buy amount.
 """
 function MarketBuyOrder(β, σ, x̄)
-    Order(β, σ, x̄, +Inf, +Inf)
+    Order(β, σ, x̄, +Inf, +Inf, true)
 end
 
 """
@@ -91,7 +98,7 @@ A tuple representing a market sell order in the orderbook.
 * `ȳ`: The maximum sell amount.
 """
 function MarketSellOrder(β, σ, ȳ)
-    Order(β, σ, +Inf, ȳ, +Inf)
+    Order(β, σ, +Inf, ȳ, +Inf, false)
 end
 
 
@@ -125,7 +132,7 @@ Compute the total trade volume of an orderbook given the buy and sell volumes an
     (i.e. if `3 => 1` is in the pmap then prices[1] will be used to represent the price of asset 3).
     This allows you have a small vector representation of the prices.
 """
-function total_trade_volume(orderbook::OrderBook, buy_volumes::Vector{T}, sell_volumes::Vector{T}, prices::Vector{T}; pmap = Dict()) where T <: Real
+function total_trade_volume(orderbook::OrderBook, buy_volumes, sell_volumes, prices; pmap = Dict())
     total_buy = 0.
     total_sell = 0.
     for (i, order) in enumerate(orderbook.orders)
@@ -161,24 +168,53 @@ function get_asset_map(orderbook)
 end
 
 """
-    construct_model(orderbook::OrderBook, buy_volumes::Vector{Float64}, sell_volumes::Vector{Float64}, prices::Vector{Float64})
+    construct_model(opt_func::Function, orderbook::OrderBook)
 
 Construct a JuMP model for the CoW problem.
 
 **Arguments**
+* `opt_func`: The function to optimize
 * `orderbook`: The orderbook.
-* `buy_volumes`: A vector of buy volumes for each asset.
-* `sell_volumes`: A vector of sell volumes for each asset.
+"""
+function construct_model(opt_func::Function, orderbook::OrderBook)
+    model = Model(Ipopt.Optimizer)
+    asset_map = get_asset_map(orderbook)
+    x = @variable(model, x[i=1:length(orderbook.orders)], lower_bound=0, upper_bound=orderbook.orders[i].x̄)
+    y = @variable(model, y[i=1:length(orderbook.orders)], lower_bound=0, upper_bound=orderbook.orders[i].ȳ)
+    p = @variable(model, p[i=1:length(asset_map)], lower_bound=0, upper_bound=Inf)
+    # objective
+    objective = opt_func(orderbook, x, y, p; pmap=asset_map)
+    set_objective(model, MOI.MAX_SENSE, objective)
+    return model, x, y, p
+end
+
+"""
+    get_graph(orderbook::OrderBook, prices::Vector; min_val=0, max_val=1000)
+
+Plot the orderbook as a graph.
+
+**Arguments**
+* `orderbook`: The orderbook.
 * `prices`: A vector of representing all the prices.
 """
-function construct_model(opt_func, orderbook::OrderBook, buy_volumes::Vector{T}, sell_volumes::Vector{T}, prices::Vector{T}) where T <: Real
-    model = Model(with_optimizer(Ipopt.Optimizer))
-    asset_map = get_asset_map(orderbook)
-    x = @variable(model, [i=1:length(orderbook.orders)], lower_bound=0, upper_bound=buy_volumes[i])
-    y = @variable(model, [i=1:length(orderbook.orders)], lower_bound=0, upper_bound=sell_volumes[i])
-    p = @variable(model, [i=1:length(observed_assets)], lower_bound=0, upper_bound=Inf)
-    # objective
-    objective = opt_func(orderbook, x, y, p, asset_map)
-    set_objective(model, MOI.MAX_SENSE, objective)
-    return model
+function get_graph(orderbook::OrderBook, prices::Vector; min_val=0, max_val=1000, kwargs...)
+    g = SimpleDiGraph(length(orderbook.assets))
+    cval = DefaultDict(0.)
+    for order in orderbook.orders
+        uv = order.buy ? (order.σ, order.β) : (order.β, order.σ)
+        add_edge!(g, uv...)
+        cval[uv...] = min(order.x̄ * prices[order.β], order.ȳ * prices[order.σ])
+    end
+    vvec = [cval[e.src, e.dst] for e in edges(g)]
+    cvec = (vvec .- min_val) ./ (max_val - min_val)
+    cc = get(diverging_linear_bjr_30_55_c53_n256, cvec)
+    gplot(g; 
+        nodefillc="lightblue", 
+        edgestrokec = cc, 
+        linetype="curve", 
+        nodelabel=orderbook.assets,
+        edgelabel=string.(round.(vvec; digits=2)),
+        kwargs...
+    )
+
 end

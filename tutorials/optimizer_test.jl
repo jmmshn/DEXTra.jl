@@ -5,13 +5,13 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ ec67358a-3d4c-11ed-2556-7bb0352ca102
-using JuMP, Ipopt, NLopt
+using JuMP, Ipopt
 
 # ╔═╡ 0d846381-1885-4097-a981-387cb9293c4e
 begin
-	N_orders = 1000
-	N_currencies = 10
-	model = Model(NLopt.Optimizer)
+	N_orders = 4
+	N_currencies = 3
+	model = Model(Ipopt.Optimizer)
 	x = @variable(model, x[1:N_orders], lower_bound = 0)
 	y = @variable(model, y[1:N_orders], lower_bound = 0)
 	p = @variable(model, p[1:N_currencies], lower_bound = 0)
@@ -63,7 +63,7 @@ price_limits = [rand() for _ in 1:length(x)]
 set_objective(model, MOI.MAX_SENSE, sum(buy_amts))
 
 # ╔═╡ b60527ad-05fe-4772-967d-55a578f11330
-# latex_formulation(model)
+latex_formulation(model)
 
 # ╔═╡ daa9fe0b-0c27-4e30-95b6-9eecc65cf786
 optimize!(model)
@@ -85,12 +85,10 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 Ipopt = "b6b21f68-93f8-5de0-b562-5493be1d77c9"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
-NLopt = "76087f3c-5699-56af-9a33-bf431cd00edd"
 
 [compat]
 Ipopt = "~1.1.0"
 JuMP = "~1.3.0"
-NLopt = "~0.6.5"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -307,12 +305,6 @@ git-tree-sha1 = "2284cb18c8670fd5c57ad010ce9bd4e2901692d2"
 uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 version = "1.8.2"
 
-[[MathProgBase]]
-deps = ["LinearAlgebra", "SparseArrays"]
-git-tree-sha1 = "9abbe463a1e9fc507f12a69e7f29346c2cdc472c"
-uuid = "fdba3010-5040-5b88-9595-932c9decdf73"
-version = "0.7.8"
-
 [[MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
@@ -328,18 +320,6 @@ deps = ["LinearAlgebra", "SparseArrays", "Test"]
 git-tree-sha1 = "4e675d6e9ec02061800d6cfb695812becbd03cdf"
 uuid = "d8a4904e-b15c-11e9-3269-09a3773c0cb0"
 version = "1.0.4"
-
-[[NLopt]]
-deps = ["MathOptInterface", "MathProgBase", "NLopt_jll"]
-git-tree-sha1 = "5a7e32c569200a8a03c3d55d286254b0321cd262"
-uuid = "76087f3c-5699-56af-9a33-bf431cd00edd"
-version = "0.6.5"
-
-[[NLopt_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "9b1f15a08f9d00cdb2761dcfa6f453f5d0d6f973"
-uuid = "079eb43e-fd8e-5478-9966-2cf3e3edb778"
-version = "2.7.1+0"
 
 [[NaNMath]]
 deps = ["OpenLibm_jll"]
