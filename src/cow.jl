@@ -40,7 +40,6 @@ struct Order
     x̄::Float64
     ȳ::Float64
     π::Float64
-    buy::Bool
 end
 
 """
@@ -52,10 +51,10 @@ A tuple representing a limit buy order in the orderbook.
 * `β`: The index of the asset being bought.
 * `σ`: The index of the asset being sold.
 * `x̄`: The maximum buy amount.
-* `π`: The maximum exchange rate (i.e. p_β/p_σ ≤ π).
+* `π`: The maximum exchange rate (i.e. price[β]/price[σ] ≤ π).
 """
 function LimitBuyOrder(β, σ, x̄, π)
-    Order(β, σ, x̄, +Inf, π, true)
+    Order(β, σ, x̄, +Inf, π)
 end
 
 """
@@ -67,10 +66,10 @@ A tuple representing a limit sell order in the orderbook.
 * `β`: The index of the asset being bought.
 * `σ`: The index of the asset being sold.
 * `ȳ`: The maximum sell amount.
-* `π`: The maximum exchange rate (i.e. p_β/p_σ ≤ π).
+* `π`: The maximum exchange rate (i.e. price[β]/price[σ] ≤ π).
 """
 function LimitSellOrder(β, σ, ȳ, π)
-    Order(β, σ, +Inf, ȳ, π, false)
+    Order(β, σ, +Inf, ȳ, π)
 end
 
 """
@@ -84,7 +83,7 @@ A tuple representing a market buy order in the orderbook.
 * `x̄`: The maximum buy amount.
 """
 function MarketBuyOrder(β, σ, x̄)
-    Order(β, σ, x̄, +Inf, +Inf, true)
+    Order(β, σ, x̄, +Inf, +Inf)
 end
 
 """
@@ -98,7 +97,7 @@ A tuple representing a market sell order in the orderbook.
 * `ȳ`: The maximum sell amount.
 """
 function MarketSellOrder(β, σ, ȳ)
-    Order(β, σ, +Inf, ȳ, +Inf, false)
+    Order(β, σ, +Inf, ȳ, +Inf)
 end
 
 
@@ -141,7 +140,7 @@ function total_trade_volume(orderbook::OrderBook, buy_volumes, sell_volumes, pri
         total_buy += buy_volumes[i] * prices[β]
         total_sell += sell_volumes[i] * prices[σ]
     end
-    return total_buy + total_sell
+    return total_buy # + total_sell
 end
 
 """
@@ -184,7 +183,24 @@ function construct_model(opt_func::Function, orderbook::OrderBook)
     p = @variable(model, p[i=1:length(asset_map)], lower_bound=0, upper_bound=Inf)
     # objective
     objective = opt_func(orderbook, x, y, p; pmap=asset_map)
+    # for each order, set the price ratio
+    buy_index = DefaultDict{Int, Vector{Int}}(Vector{Int})
+    sell_index = DefaultDict{Int, Vector{Int}}(Vector{Int})
+    for (i, order) in enumerate(orderbook.orders)
+        β = asset_map[order.β]
+        σ = asset_map[order.σ]
+        push!(buy_index[β], i)
+        push!(sell_index[σ], i)
+        @constraint(model, p[β] * x[i] == p[σ] * y[i])
+        if order.π != +Inf
+            @constraint(model, p[β] <= order.π * p[σ])
+        end
+    end
+    for (k,v) in buy_index
+        @constraint(model, sum(x[i] for i in v) == sum(y[i] for i in sell_index[k]))
+    end
     set_objective(model, MOI.MAX_SENSE, objective)
+    # set_silent(model)
     return model, x, y, p
 end
 
@@ -197,15 +213,16 @@ Plot the orderbook as a graph.
 * `orderbook`: The orderbook.
 * `prices`: A vector of representing all the prices.
 """
-function get_graph(orderbook::OrderBook, prices::Vector; min_val=0, max_val=1000, kwargs...)
+function get_graph(orderbook::OrderBook, prices::Vector; min_val=0, max_val=1000, layout=shell_layout, kwargs...)
     g = SimpleDiGraph(length(orderbook.assets))
     cval = DefaultDict(0.)
     for order in orderbook.orders
-        uv = order.buy ? (order.σ, order.β) : (order.β, order.σ)
+        uv = (order.σ, order.β)
         add_edge!(g, uv...)
-        cval[uv...] = min(order.x̄ * prices[order.β], order.ȳ * prices[order.σ])
+        cval[uv...] += min(order.x̄ * prices[order.β], order.ȳ * prices[order.σ])
     end
     vvec = [cval[e.src, e.dst] for e in edges(g)]
+    @show vvec
     cvec = (vvec .- min_val) ./ (max_val - min_val)
     cc = get(diverging_linear_bjr_30_55_c53_n256, cvec)
     gplot(g; 
@@ -214,7 +231,21 @@ function get_graph(orderbook::OrderBook, prices::Vector; min_val=0, max_val=1000
         linetype="curve", 
         nodelabel=orderbook.assets,
         edgelabel=string.(round.(vvec; digits=2)),
+        layout=layout,
         kwargs...
     )
+end
 
+function summarize(orderbook::OrderBook, exec_buy, exec_sell, exec_price)
+    pval = value.(exec_price)
+    asset_map = get_asset_map(orderbook)
+    for (o, xv, yv) in zip(orderbook.orders, value.(exec_buy), value.(exec_sell))
+        β = asset_map[o.β]
+        σ = asset_map[o.σ]
+        println("=====================================")
+        println("Order: $(o)")
+        println("Executed: BUY: $(xv) (out of $(o.x̄)) at price $(pval[β])")
+        println("Executed: SELL: $(yv) (out of $(o.ȳ)) at price $(pval[σ])")
+        println("=====================================")
+    end
 end
