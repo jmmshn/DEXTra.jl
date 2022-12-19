@@ -2,6 +2,7 @@ using JuMP, Ipopt, GraphRecipes
 import ColorSchemes.leonardo
 import DataStructures: DefaultDict
 using GraphPlot
+using Printf
 import ColorSchemes:diverging_linear_bjr_30_55_c53_n256
 
 
@@ -140,7 +141,7 @@ function total_trade_volume(orderbook::OrderBook, buy_volumes, sell_volumes, pri
         total_buy += buy_volumes[i] * prices[β]
         total_sell += sell_volumes[i] * prices[σ]
     end
-    return total_buy # + total_sell
+    return total_buy + total_sell
 end
 
 """
@@ -193,14 +194,15 @@ function construct_model(opt_func::Function, orderbook::OrderBook)
         push!(sell_index[σ], i)
         @constraint(model, p[β] * x[i] == p[σ] * y[i])
         if order.π != +Inf
-            @constraint(model, p[β] <= order.π * p[σ])
+            @NLconstraint(model, p[β] / p[σ] <= order.π ) 
+            # TODO: For some reason this setting this to p[β] <= order.π * p[σ] doesn't work
         end
     end
     for (k,v) in buy_index
         @constraint(model, sum(x[i] for i in v) == sum(y[i] for i in sell_index[k]))
     end
     set_objective(model, MOI.MAX_SENSE, objective)
-    # set_silent(model)
+    set_silent(model)
     return model, x, y, p
 end
 
@@ -222,7 +224,6 @@ function get_graph(orderbook::OrderBook, prices::Vector; min_val=0, max_val=1000
         cval[uv...] += min(order.x̄ * prices[order.β], order.ȳ * prices[order.σ])
     end
     vvec = [cval[e.src, e.dst] for e in edges(g)]
-    @show vvec
     cvec = (vvec .- min_val) ./ (max_val - min_val)
     cc = get(diverging_linear_bjr_30_55_c53_n256, cvec)
     gplot(g; 
@@ -243,9 +244,10 @@ function summarize(orderbook::OrderBook, exec_buy, exec_sell, exec_price)
         β = asset_map[o.β]
         σ = asset_map[o.σ]
         println("=====================================")
-        println("Order: $(o)")
-        println("Executed: BUY: $(xv) (out of $(o.x̄)) at price $(pval[β])")
-        println("Executed: SELL: $(yv) (out of $(o.ȳ)) at price $(pval[σ])")
+        println("Order: $(o) Executed")
+        @printf "BUY: %.2f (out of %.2f) at price %.2f\n" xv o.x̄ pval[β]
+        @printf "SELL: %.2f (out of %.2f) at price %.2f\n" yv o.ȳ pval[σ]
+        @printf "Value: %.2f\n" (xv * pval[β] + yv * pval[σ]) / 2
         println("=====================================")
     end
 end
