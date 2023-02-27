@@ -41,7 +41,7 @@ We will use both of these definitions in our code depending on what we are tryin
 ## Developers
 
 DEXTra.jl is developed and maintained by Jimmy-Xuan Shen (@jmmshn) 
-with contributions by:
+with discussion and input from:
     - Jesper T. Kristensen
     - Juan Pablo Madrigal Cianci
     - Giorgos Felekis
